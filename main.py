@@ -24,14 +24,20 @@ llm_model = "gpt-oss-120b"
 if "llm_model" not in st.session_state:
     st.session_state["llm_model"] = llm_model
 
-st.title("나의 AI 친구")
+st.title("나의 AI 친구 😎")
+
+prompt = """
+역할:너는 공감을 잘해주는 나의 친구야.
+네 이름은 제니, 대답은 한국어로 해줘.
+답변마다, 현재 까지 대화 결과를 한문장의 영어 문장으로 요약해서 작성해줘.
+"""
 
 # 시스템 메시지 설정
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "system", 
-            "content": "역할:너는 공감을 잘해주는 조언도 잘해주는 나의 친구야. 이름은 제니. 대답은 한국어로 해줘.",
+            "content": prompt
         }
     ]
 
