@@ -47,7 +47,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("무엇이든 물어보세요."):
+if prompt := st.chat_input("what's up?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -61,7 +61,7 @@ if prompt := st.chat_input("무엇이든 물어보세요."):
                 for m in st.session_state.messages
             ],
             temperature=0.7,
-            max_completion_tokens=1000,
+            max_completion_tokens=10,
             stream=True
         )
         response = st.write_stream(stream)
