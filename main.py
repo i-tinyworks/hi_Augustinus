@@ -65,6 +65,39 @@ selected_model_name = st.sidebar.selectbox(
 
 st.session_state["llm_model"] = model_options[selected_model_name]
 
+st.sidebar.title("⚙️ 설정")
+
+# ----- Think / No-Think 모드 -----
+think_mode = st.sidebar.radio(
+    "🧠 Thinking Mode",
+    ("Think", "No-Think")
+)
+
+st.session_state["think_mode"] = think_mode
+
+def ask_llm(question: str, context: str):
+    rag_prompt = f"""
+[Context: Augustine 문헌 자료]
+{context}
+
+너는 반드시 위 context 내용만 참고하여 답변해야 한다.
+"""
+
+    completion = client.chat.completions.create(
+        model=st.session_state["llm_model"],
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": rag_prompt}
+        ],
+        temperature=0.4,
+        max_completion_tokens=1000,
+        extra_body={
+            "mode": "think" if st.session_state["think_mode"] == "Think" else "no_think"
+        }
+    )
+
+    return completion.choices[0].message.content
+
 # ==============================
 # 6) UI 타이틀
 # ==============================
