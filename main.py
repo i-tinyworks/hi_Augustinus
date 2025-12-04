@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ==============================
-# 1) Supabase 연결 상태 체크 함수 (⭐ 반드시 맨 위!)
+# 1) Supabase 연결 상태 체크 함수
 # ==============================
 def check_supabase_connection(supabase):
     try:
