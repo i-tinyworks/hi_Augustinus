@@ -15,12 +15,16 @@ load_dotenv()
 # 1) Supabase 연결 설정 (반드시 anon key)
 # ==========================================
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")   # ✔ 수정됨: service_key → anon key
+SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")  # ✔ anon key only
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    st.error("❌ SUPABASE_URL 또는 SUPABASE_ANON_KEY가 로드되지 않았습니다.")
+    st.stop()
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-def check_supabase_connection(supabase):
+def check_supabase_connection():
     try:
         supabase.table("documents").select("id").limit(1).execute()
         return True, "정상 연결됨"
@@ -36,38 +40,62 @@ client = OpenAI(
     api_key=os.getenv("CEREBRAS_API_KEY")
 )
 
+if not os.getenv("CEREBRAS_API_KEY"):
+    st.error("❌ CEREBRAS_API_KEY가 없습니다.")
+    st.stop()
+
+
 # ==========================================
 # 3) OpenAI Embedding 모델
 # ==========================================
 embed_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+if not os.getenv("OPENAI_API_KEY"):
+    st.error("❌ OPENAI_API_KEY가 없습니다.")
+    st.stop()
+
 
 def embed_text(text: str):
-    res = embed_client.embeddings.create(
-        model="text-embedding-3-large",  # 벡터 크기 3072
-        input=text
-    )
-    return res.data[0].embedding
+    try:
+        res = embed_client.embeddings.create(
+            model="text-embedding-3-large",  # 3072 vector
+            input=text
+        )
+        return res.data[0].embedding
+    except Exception as e:
+        st.error(f"임베딩 오류: {str(e)}")
+        return None
 
 
 # ==========================================
 # 4) Supabase 벡터 검색 (RPC 사용)
 # ==========================================
 def search_supabase(query_embedding, match_count=5):
-    response = supabase.rpc(
-        "match_documents",
-        {
-            "query_embedding": query_embedding,
-            "match_threshold": 0.3,     # ✔ 누락되어 오류나던 부분
-            "match_count": match_count
-        }
-    ).execute()
-    return response.data or []
+    try:
+        response = supabase.rpc(
+            "match_documents",
+            {
+                "query_embedding": query_embedding,
+                "match_threshold": 0.3,     # SQL 함수와 동일해야 함
+                "match_count": match_count
+            }
+        ).execute()
+        return response.data or []
+    except Exception as e:
+        st.error(f"Supabase RPC 오류: {str(e)}")
+        return []
 
 
 def build_context(question: str):
     emb = embed_text(question)
+    if emb is None:
+        return ""
+
     matches = search_supabase(emb, match_count=5)
+
+    if not matches:
+        return "본문에는 없습니다."
+
     return "\n\n".join([m["content"] for m in matches])
 
 
@@ -76,7 +104,7 @@ def build_context(question: str):
 # ==========================================
 st.sidebar.title("⚙️ 설정")
 
-ok, msg = check_supabase_connection(supabase)
+ok, msg = check_supabase_connection()
 if ok:
     st.sidebar.success("🟢 Supabase 연결됨")
 else:
@@ -112,6 +140,7 @@ system_prompt = """
 6) 핵심 요약
 7) 마지막에 라틴어 한 문장 요약
 8) context에 없는 내용: "본문에는 없습니다."
+9) 대답 도중에 끝마치지 말고 반드시 마무리 하기.
 """
 
 
@@ -123,23 +152,26 @@ def ask_llm(question: str, context: str):
 [Context: Augustine 문헌 발췌]
 {context}
 
-위 context 내용만 참고하여 질문에 답하라.
-context에 없는 내용은 반드시 "본문에는 없습니다."라고 답하라.
+(주의: 위 context 내용만 참고하여 답하라.
+context에 없는 내용은 반드시 "본문에는 없습니다."라고 답하라.)
 
 질문: {question}
 """
 
-    completion = client.chat.completions.create(
-        model=st.session_state["llm_model"],
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": rag_prompt}
-        ],
-        temperature=0.4,
-        max_completion_tokens=1000
-    )
-
-    return completion.choices[0].message.content
+    try:
+        completion = client.chat.completions.create(
+            model=st.session_state["llm_model"],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": rag_prompt}
+            ],
+            temperature=0.4,
+            max_completion_tokens=1000
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        st.error(f"LLM 오류: {str(e)}")
+        return "오류가 발생했습니다."
 
 
 # ==========================================
@@ -161,18 +193,17 @@ for msg in st.session_state.messages:
 # ==========================================
 if user_input := st.chat_input("신앙/신학 무엇이 궁금한가요?"):
 
-    # 사용자 메시지
     st.session_state.messages.append({"role": "user", "content": user_input})
+
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # 🔎 RAG Context
+    # 🔎 RAG Context 생성
     context = build_context(user_input)
 
-    # 🤖 답변 생성
+    # 🤖 LLM 답변
     answer = ask_llm(user_input, context)
 
-    # 출력
     with st.chat_message("assistant"):
         st.markdown(answer)
 
