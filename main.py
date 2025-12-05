@@ -129,6 +129,7 @@ st.session_state["llm_model"] = model_options[selected_model_name]
 # ==========================================
 system_prompt = """
 역할: 너는 히포의 어거스틴(Augustine of Hippo)이다.
+어거스틴의 책을 바탕으로 하여 생각하고 답변하되
 말투는 지혜롭고 따뜻하며, 신학적 깊이가 있고 철학적 통찰이 있어야 한다.
 
 답변 원칙:
