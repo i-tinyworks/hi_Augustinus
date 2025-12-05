@@ -1,160 +1,142 @@
-📘 Hi Augustine — 어거스틴 RAG 신학 챗봇
+# **어거스틴에게 물어봐 — Streamlit RAG Chatbot**
 
-Cerebras LLM + OpenAI Embedding + Supabase Vector DB 기반 RAG 챗봇
+Supabase + OpenAI Embedding + Cerebras LLM 기반 신학 RAG 챗봇
 
-📖 프로젝트 소개
+---
 
-Hi Augustine은 히포의 어거스틴(Augustine of Hippo)의 신학 사상과 문헌을
-AI 기반 RAG 시스템(Retrieval-Augmented Generation) 으로 재구성한 챗봇입니다.
+## 📌 소개
 
-사용자가 신앙·신학 질문을 하면:
+**Hi Augustine**은 어거스틴(Augustinus)의 저작을 기반으로, 사용자의 신앙·신학 질문에 답변하는 **RAG 기반 챗봇**입니다.
+질문 → 임베딩 → Supabase 벡터 검색 → Augustine 문맥 기반 LLM 응답의 전체 과정을 자동화합니다.
 
-OpenAI 임베딩(text-embedding-3-large)
+---
 
-Supabase Vector DB에서 Augustine 문헌 검색 (documents 테이블)
+## 🚀 주요 기능
 
-Cerebras LLM(gpt-oss-120b 등)으로 맥락 기반 답변 생성
+* Supabase Vector DB 기반 문맥 검색 (RPC: `match_documents`)
+* OpenAI 임베딩 생성 (`text-embedding-3-large`)
+* Cerebras LLM 선택(Qwen / LLaMA / GPT-OSS)
+* Augustine 스타일의 시스템 프롬프트 적용
+* Streamlit 챗 인터페이스 제공
 
-을 거쳐,
-마치 실제 어거스틴과 대화하는 것처럼,
-따뜻하고 지혜로운 답변을 제공하는 챗봇입니다.
+---
 
-🎯 주요 기능
-✔ 1. RAG 기반 Augustine 신학 답변
+## 📂 프로젝트 구조
 
-Supabase에 저장된 Augustine 문헌(Confessions, Doctrine 등)을 기반으로 답변
+```
+Hi_Augustinus/
+ ├── main.py
+ ├── .env
+ ├── requirements.txt
+ └── README.md
+```
 
-문헌에 없는 내용은 "본문에는 없습니다." 라고 정확히 응답
+---
 
-✔ 2. Cerebras 언어 모델 선택 기능
+## 🔧 설치 및 실행
 
-GPT-OSS 120B
+### 1) 패키지 설치
 
-QWen 32B
-
-LLaMA 3.1 8B
-
-사용자가 Sidebar에서 즉시 모델 변경 가능
-
-✔ 3. OpenAI Embeddings 기반 정교한 검색
-
-text-embedding-3-large 사용
-
-질문 의도에 가장 가까운 Augustine 문헌 단락을 Supabase에서 검색
-
-✔ 4. Supabase 연결 상태 표시
-
-좌측 Sidebar에서 실시간 연결 여부 확인
-
-🟢 연결됨
-
-🔴 실패 (에러 메시지 표시)
-
-✔ 5. 어거스틴 스타일 답변 생성
-
-따뜻함 + 철학적 깊이 + 신학적 진리
-
-비기독교인도 포용
-
-마지막 문장에 라틴어 한 문장 요약
-
-🏗 기술 스택
-영역	기술
-LLM	⭐ Cerebras gpt-oss-120b / QWen 32B / LLaMA
-Embedding	OpenAI text-embedding-3-large
-Vector DB	Supabase (PGVector)
-Backend	Python
-Frontend	Streamlit
-RAG	Custom match_documents 함수 사용
-📁 프로젝트 구조
-project/
-│── main.py                # Streamlit 챗봇 메인 코드
-│── ingest.py              # PDF → chunk → embedding → Supabase 저장
-│── requirements.txt
-│── .env                   # API keys 저장
-└── README.md
-
-🔧 설치 & 실행
-1) 저장소 클론
-git clone https://github.com/사용자/hi-augustinus.git
-cd hi-augustinus
-
-2) 필요한 패키지 설치
+```bash
 pip install -r requirements.txt
+```
 
+### 2) 환경 변수 설정
 
-requirements.txt 예시:
+프로젝트 루트에 `.env` 파일 생성:
 
-streamlit
-openai
-supabase
-python-dotenv
-pypdf
-
-3) .env 파일 설정
-
-프로젝트 루트에 .env 파일 생성:
-
-CEREBRAS_API_KEY=your_cerebras_key
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
 OPENAI_API_KEY=your_openai_key
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_SERVICE_KEY=your_supabase_service_key
+CEREBRAS_API_KEY=your_cerebras_key
+```
 
-4) RAG 데이터 ingestion (문헌 업로드)
-python ingest.py --file confessions.pdf
+### 3) 실행
 
-5) 챗봇 실행
+```bash
 streamlit run main.py
+```
 
-💡 사용 방법
+---
 
-좌측에서 언어 모델 선택
+## 🧠 RAG 동작 흐름
 
-상태에서 Supabase 연결 확인
+1. 사용자 질문 입력
+2. 질문을 OpenAI Embedding으로 변환
+3. Supabase RPC(`match_documents`)로 유사 문헌 검색
+4. 문맥(Context) 구성
+5. 선택된 Cerebras LLM에 전달하여 Augustine 스타일로 응답 생성
+6. Streamlit UI에서 출력
 
-질문 입력:
+---
 
-예: “인간의 의지는 어떻게 변화되는가?”
+## 🗄 Supabase 설정 요약
 
-예: “회심이란 무엇인가?”
+### Documents 테이블
 
-챗봇은 Augutine 문헌에서 관련 내용을 검색하고
-그 기반 위에 답변을 생성함.
+```sql
+CREATE TABLE documents (
+  id bigint generated always as identity primary key,
+  content text,
+  embedding vector(3072)
+);
+```
 
-🧠 어거스틴 답변의 특징
+### 벡터 검색 RPC
 
-따뜻한 공감
+```sql
+create or replace function match_documents(
+  query_embedding vector(3072),
+  match_threshold float,
+  match_count int
+)
+returns table (
+  id bigint,
+  content text,
+  similarity float
+)
+language plpgsql
+as $$
+begin
+  return query
+  select d.id, d.content,
+         1 - (d.embedding <=> query_embedding) as similarity
+  from documents d
+  order by similarity desc
+  limit match_count;
+end;
+$$;
+```
 
-철학·신학의 깊이
+---
 
-은혜, 사랑, 내적 성찰 중심
+## 🎛 모델 선택
 
-비기독교인도 환영
+사이드바에서 다음 모델 중 선택 가능:
 
-명료하고 이해 쉽게 설명
+* **Qwen 3-32B**
+* **LLaMA 3.1 8B**
+* **GPT-OSS 120B**
 
-마지막 문장에 항상 라틴어 요약
+---
 
-🔍 RAG 검색 설명
+## 📜 시스템 프롬프트 (요약)
 
-질문 → Embedding 생성
+* 역할: *어거스틴 스타일의 신학자·목회자*
+* 원칙:
 
-Supabase match_documents 함수 호출
+  * context 기반 답변
+  * context에 없으면 “본문에는 없습니다.”
+  * 부드럽고 지혜로운 목회자 스타일
+  * 라틴어 문구로 결말
 
-상위 5개 문헌 chunk 선택
+---
 
-LLM에게 [Context] 블록으로 전달
+## 📝 개발자
 
-Strict RAG 규칙 적용
+Email: **[itinyworks@gmail.com](mailto:itinyworks@gmail.com)**
 
-context에 없으면 “본문에는 없습니다.”
+---
 
-📌 예시 질문
 
-“하나님의 은혜란 무엇인가?”
-
-“죄책감에서 어떻게 자유로워질 수 있는가?”
-
-“삼위일체는 어떻게 이해해야 하나?”
-
-“Confessions 내용 안에서 ‘사랑’은 무엇인가?”
