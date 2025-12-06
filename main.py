@@ -108,9 +108,8 @@ if ok:
 else:
     st.sidebar.error(f"🔴 연결 실패: {msg}")
 
-# ✔ 기본 모델을 Qwen-3-32B로 설정
+# ✔ 기본 모델을 LLaMA 3.1 8B로 설정
 model_options = {
-    "Qwen 3-32B": "qwen-3-32b",
     "LLaMA 3.1 8B": "llama3.1-8b",
     "GPT-OSS 120B": "gpt-oss-120b"
 }
@@ -118,7 +117,7 @@ model_options = {
 selected_model_name = st.sidebar.selectbox(
     "🤖 LLM 선택",
     list(model_options.keys()),
-    index=0,     # 기본값을 Qwen-3-32b로 설정
+    index=0,     # 기본값을 LLaMA 3.1 8B로 설정
 )
 
 st.session_state["llm_model"] = model_options[selected_model_name]
